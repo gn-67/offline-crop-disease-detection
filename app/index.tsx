@@ -1,20 +1,22 @@
 import { useCameraPermissions } from 'expo-camera';
 import { ImageBackground } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import * as MediaLibrary from 'expo-media-library';
 import React, { useEffect, useState } from "react";
 import { Alert, Dimensions, Linking, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import colors, { gradients } from '../assets/colors/colors';
-export { default as Cam } from '../assets/svg/camera.svg';
-export { default as Lib } from '../assets/svg/library.svg';
+import { Cam, Lib } from '../assets/svg';
 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function Index() {
   const [permission, requestPermission] = useCameraPermissions();
+  const [permissionResponse, requestPermission2] = MediaLibrary.usePermissions(); // Fixed function name
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (permission) {
@@ -22,13 +24,19 @@ export default function Index() {
     }
   }, [permission]);
 
+  useEffect(() => {
+    if (permissionResponse) { // Fixed: use permissionResponse instead of mediaPermission
+      setHasMediaPermission(permissionResponse.granted);
+    }
+  }, [permissionResponse]); // Fixed: use permissionResponse
+
   const handleCameraPress = async () => {
-    if (!hasPermission) {
+    if (!hasPermission) { // Fixed: Camera should check camera permission
       const granted = await requestPermission();
       if (!granted) {
         Alert.alert(
           "Permissions Needed",
-          "We need access to your camera to continue.",
+          "We need access to your camera to continue.", // Fixed message
           [
             {
               text: "Open Settings",
@@ -42,15 +50,16 @@ export default function Index() {
       setHasPermission(true);
     }
 
-   //actual camera functionality here
+    // actual camera functionality here
   };
+
   const handleLibPress = async () => {
-    if (!hasPermission) {
-      const granted = await requestPermission();
+    if (!hasMediaPermission) { // Fixed: Library should check media permission
+      const granted = await requestPermission2(); // Fixed function name
       if (!granted) {
         Alert.alert(
           "Permissions Needed",
-          "We need access to your camera to continue.",
+          "We need access to your photo library to continue.", // Fixed message
           [
             {
               text: "Open Settings",
@@ -61,10 +70,10 @@ export default function Index() {
         );
         return;
       }
-      setHasPermission(true);
+      setHasMediaPermission(true);
     }
 
-   //actual camera functionality here
+    // actual library functionality here
   };
 
   return (
@@ -91,7 +100,7 @@ export default function Index() {
               ])
             }
           /> */}
-//camera and photo lib 
+{/* //camera and photo lib  */}
           <TouchableOpacity onPress={handleCameraPress}>
             <Cam width={120} height={120} />
           </TouchableOpacity>
