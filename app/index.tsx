@@ -1,26 +1,71 @@
+import { useCameraPermissions } from 'expo-camera';
 import { ImageBackground } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React from "react";
-import { Button, Dimensions, StyleSheet, Text, TouchableHighlight } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, Dimensions, Linking, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useCameraDevice, useCameraPermission } from "react-native-vision-camera";
+
 import colors, { gradients } from '../assets/colors/colors';
-import Logo from "../assets/svg/logo.svg";
+export { default as Cam } from '../assets/svg/camera.svg';
+export { default as Lib } from '../assets/svg/library.svg';
+
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function Index() {
-  const handlePress = () => console.log("Text pressed");
-  console.log(Dimensions.get("screen"));
-  const {hasPermission} = useCameraPermission();
-  const microphonePermission = Camera.getMicrophonePermissionStatus();
-  const redirectToPermissions = !hasPermission || microphonePermission == "not-determined";
+  const [permission, requestPermission] = useCameraPermissions();
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
-  const device = useCameraDevice("back");
-  const router = useRouter();
-  if (redirectToPermissions) return <Redirect href={"/permissions"} />;  //prob use alert
-  if(!device) return <></>;
+  useEffect(() => {
+    if (permission) {
+      setHasPermission(permission.granted);
+    }
+  }, [permission]);
 
-  
+  const handleCameraPress = async () => {
+    if (!hasPermission) {
+      const granted = await requestPermission();
+      if (!granted) {
+        Alert.alert(
+          "Permissions Needed",
+          "We need access to your camera to continue.",
+          [
+            {
+              text: "Open Settings",
+              onPress: () => Linking.openSettings(),
+            },
+            { text: "Cancel", style: "cancel" },
+          ]
+        );
+        return;
+      }
+      setHasPermission(true);
+    }
+
+   //actual camera functionality here
+  };
+  const handleLibPress = async () => {
+    if (!hasPermission) {
+      const granted = await requestPermission();
+      if (!granted) {
+        Alert.alert(
+          "Permissions Needed",
+          "We need access to your camera to continue.",
+          [
+            {
+              text: "Open Settings",
+              onPress: () => Linking.openSettings(),
+            },
+            { text: "Cancel", style: "cancel" },
+          ]
+        );
+        return;
+      }
+      setHasPermission(true);
+    }
+
+   //actual camera functionality here
+  };
 
   return (
     <LinearGradient
@@ -30,45 +75,36 @@ export default function Index() {
       style={styles.container}
     >
       <ImageBackground
-        style = {responsiveStyle(-18, 200, 451, 717)}
+        style={responsiveStyle(-18, 200, 451, 717)}
         imageStyle={styles.image}
         source={require('../assets/images/bg.png')}
-        >
-
+      >
         <SafeAreaView style={styles.safeArea}>
-          <Text style={styles.title}>
-            Plant Disease Detection App
-          </Text>
-    
-          <Button 
-            title="Click Me" 
-            onPress={() => Alert.alert("My Title", "My message", [
-              {text: "Yes", onPress: () => console.log("Yes") },
-              {text: "No", onPress: () => console.log("No") },
-            ])} />
-        
-          <TouchableHighlight onPress={() => console.log("Image tapped")}>
-            <Logo width={120} height={120} />
-          </TouchableHighlight>
+          <Text style={styles.title}>Plant Disease Detection App</Text>
+
+          {/* <Button
+            title="Click Me"
+            onPress={() =>
+              Alert.alert("My Title", "My message", [
+                { text: "Yes", onPress: () => console.log("Yes") },
+                { text: "No", onPress: () => console.log("No") },
+              ])
+            }
+          /> */}
+//camera and photo lib 
+          <TouchableOpacity onPress={handleCameraPress}>
+            <Cam width={120} height={120} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLibPress}>
+            <Lib width={120} height={120} />
+          </TouchableOpacity>
         </SafeAreaView>
       </ImageBackground>
     </LinearGradient>
   );
-
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-/**
- * converts Figma design values into responsive screen values
- * @param {number} x - X position from Figma
- * @param {number} y - Y position from Figma
- * @param {number} w - Width from Figma
- * @param {number} h - Height from Figma
- * @param {number} designWidth - Figma frame width (default 375)
- * @param {number} designHeight - Figma frame height (default 812)
- * @returns {object} { top, left, width, height }
- */
+// Figma-to-screen responsive function
 export function responsiveStyle(x, y, w, h, designWidth = 412, designHeight = 917) {
   return {
     position: "absolute",
@@ -82,32 +118,17 @@ export function responsiveStyle(x, y, w, h, designWidth = 412, designHeight = 91
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',   //brings text to the center of the screen
-    alignItems: 'center',  //aligns it to the center
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
-  // background: {
-  //   flex: 1,
-  //   width: width * 1.1, height: height,   //100% of screen width
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   responsiveStyle(-18, 200, 451, 717)
-    
-  // },
   safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-
-  // camera: {
-   
-  // }
-
-
   title: {
-    fontFamily: 'Jersey20-Regular',
+    fontFamily: "Jersey20-Regular",
     color: colors.secondary,
     fontSize: 24,
-  }
+  },
 });
